@@ -8,7 +8,7 @@ int main() {
     gpiod_chip* chip = gpiod_chip_open_by_name("gpiochip4");
 
     // Get GPIO lines
-    gpiod_line* pin22 = gpiod_chip_get_line(chip, 22);
+    gpiod_line* pin17 = gpiod_chip_get_line(chip, 22);
     gpiod_line* pin18 = gpiod_chip_get_line(chip, 23);
     gpiod_line* powerCut = gpiod_chip_get_line(chip, 24);
 
@@ -27,10 +27,10 @@ int main() {
             std::cout << "Power Off \n" ;
             gpiod_line_set_value(powerCut, 0);
         }
-        else if(input == 1){
+        else if(input == 1) {
             std::cout << "Power On \n" ;
             gpiod_line_set_value(powerCut, 1);            
-            
+        }    
         else if (input == 2) {
             // Extend
             std::cout << "Mode 1 \n" ;
