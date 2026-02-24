@@ -2,6 +2,9 @@
 Draft 1: 
 - will retrieve initial positions of 2 motors and print them to console
 - have each of them turn for a given number of seconds, one at a time
+
+Notes:
+- check if USB port is the right one!
 */
 
 /*Library*/
@@ -13,7 +16,8 @@ Draft 1:
 #include "serialPort/SerialPort.h"
 
 /*definitions/macros/variables*/
-#define MOTOR_COUNT 2 // # of motors   
+#define MOTOR_COUNT 2 // # of motors  
+const char* USB_NO = "/dev/ttyUSB3"; 
 
 /*functions prototypes*/
 void runTsec(int motor_id, MotorCmd &cmd, MotorData &data, SerialPort &serial, double T, double W);
@@ -25,7 +29,7 @@ void print_MotorData(MotorCmd &cmd, MotorData &data);
 */
 int main() {
   /*initialization*/
-  SerialPort  serial("/dev/ttyUSB3");
+  SerialPort  serial(USB_NO);
   MotorCmd    cmd;
   MotorData   data;
   cmd.motorType = MotorType::GO_M8010_6;
