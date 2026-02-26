@@ -44,7 +44,7 @@ const double POS_TOL_RAD = 0.1;
 
 // Constant SPEED command (your request: make speed 6.33)
 // This is motor-side rad/s, sent as cmd.dq
-const double MOTOR_SPEED_CMD = 6.33;
+const double MOTOR_SPEED_CMD = 6.28 * 6.33;
 
 /*function prototypes*/
 void print_MotorData(MotorCmd &cmd, MotorData &data);
