@@ -39,7 +39,7 @@ const double GEAR_RATIO   = 6.33;    // motor rotations per wheel rotation
 const double RAD_PER_CM = (0.01 / WHEEL_RADIUS) * GEAR_RATIO;
 
 // ---------- Control ----------
-const double POS_TOL_RAD       = 0.02; // stop when |error| < this (motor rad)
+const double POS_TOL_RAD       = 0.1; // stop when |error| < this (motor rad)
 const double POS_SLOW_BAND_RAD = 1.0;  // start halving speed when |error| < this (motor rad)
 
 // Starting speed: choose a slow wheel speed, then convert to motor-side speed
@@ -85,21 +85,7 @@ void moveDistanceCm_speedControl(double dist_cm,
     serial.sendRecv(&cmd, &data);
     double q_now = data.q;
 
-    // Error (distance to target in motor radians)
-    double error  = q_target - q_now;
-    double absErr = std::fabs(error);
 
-    // Slow down by half when within slow band
-    if (absErr < POS_SLOW_BAND_RAD) {
-      speed_cmd *= 0.5;
-      std::cout << "[SLOWING DOWN] error = " << absErr
-                << " rad, new speed_cmd = " << speed_cmd << " rad/s\n";
-    }
-
-    // Stop condition: close enough AND speed is very small
-    if (absErr < POS_TOL_RAD && speed_cmd < MIN_MOTOR_SPEED) {
-      break;
-    }
 
     // SPEED CONTROL command (same style as your runTsec)
     cmd.id   = DRIVE_ID;
