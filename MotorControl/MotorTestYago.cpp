@@ -1,19 +1,16 @@
 /*
-Drive motor (ID 0) forward/backward by a user-entered distance (cm)
-using ONLY the motor encoder (data.q).
+Based on your WORKING code mechanics:
+- Uses cmd.mode=0 to read position
+- Uses cmd.mode=1 with speed control (kp=0, kd=0.01, dq=...) to move
+- Uses serial.sendRecv(&cmd,&data) exactly like your runTsec()
 
-Control approach:
-1) Ask user for desired distance (cm)
-2) Compute target motor position (q_target)
-3) Decide direction ONCE from the user input sign (dist_cm)
-4) WHILE not at target: command a constant slow speed (dq) toward target
-5) When close to target: keep reducing speed by half and print "SLOWING DOWN"
-6) When speed is very small AND error is within tolerance: stop motor
+NEW behavior (for Cart motor only, USB0):
+- Ask user for a distance in cm (+ forward, - backward)
+- Convert cm -> desired motor position (q_target)
+- WHILE not at q_target (within tolerance): run at constant speed using the SAME speed-control fields
+- Stop motor at the end with mode 0
 
-Assumptions / constants:
-- USB port: /dev/ttyUSB0
-- Wheel radius R = 114.3 mm = 0.1143 m
-- Gear ratio G = 6.33 (motor rotations per wheel rotation)
+Keeps your second motor/USB1 code structure intact, but we focus on moving the cart motor by distance.
 */
 
 #include <unistd.h>
@@ -25,117 +22,146 @@ Assumptions / constants:
 #include "unitreeMotor/unitreeMotor.h"
 #include "serialPort/SerialPort.h"
 
-// ---------- Hardware ----------
-const char* USB_NO   = "/dev/ttyUSB0";
-const int   DRIVE_ID = 0;
+/*definitions/macros/variables*/
+const char* USB_CartMotor = "/dev/ttyUSB0";
+const char* USB_LA_Motor  = "/dev/ttyUSB1"; // still initialized, not used for distance move here
 
-// ---------- Geometry ----------
-const double WHEEL_RADIUS = 0.1143;  // meters
-const double GEAR_RATIO   = 6.33;    // motor rotations per wheel rotation
+// Drive motor ID on Cart USB (if only 1 motor on that port, this is usually 0)
+const int CART_ID = 0;
+
+// Wheel radius (114.3 mm = 0.1143 m)
+const double WHEEL_RADIUS = 0.1143; // meters
+
+// Gear ratio used in your working code: dq = W * 6.33
+const double GEAR_RATIO = 6.33;
 
 // Convert cm -> motor radians:
-// distance_m = cm * 0.01
 // theta_motor = (distance_m / R) * G
 const double RAD_PER_CM = (0.01 / WHEEL_RADIUS) * GEAR_RATIO;
 
-// ---------- Control ----------
-const double POS_TOL_RAD       = 0.1; // stop when |error| < this (motor rad)
-const double POS_SLOW_BAND_RAD = 1.0;  // start halving speed when |error| < this (motor rad)
+// Stop tolerance in motor radians
+const double POS_TOL_RAD = 0.1;
 
-// Starting speed: choose a slow wheel speed, then convert to motor-side speed
-const double WHEEL_SPEED_RAD_S = 6.0;                 // wheel rad/s (slow)
-const double MOTOR_SPEED_START = WHEEL_SPEED_RAD_S * GEAR_RATIO; // motor rad/s
-const double MIN_MOTOR_SPEED   = 1.0;                 // stop once command speed drops below this
+// Constant SPEED command (your request: make speed 6.33)
+// This is motor-side rad/s, sent as cmd.dq
+const double MOTOR_SPEED_CMD = 6.33;
+
+/*function prototypes*/
+void print_MotorData(MotorCmd &cmd, MotorData &data);
+double readMotorPos(int motor_id, MotorCmd &cmd, MotorData &data, SerialPort &serial);
+void moveCartDistanceCm(double dist_cm, MotorCmd &cmd, MotorData &data, SerialPort &serial);
+
+/*main*/
+int main() {
+  SerialPort serial_Cart(USB_CartMotor);
+  SerialPort serial_LA(USB_LA_Motor);
+
+  MotorCmd  cmd;
+  MotorData data;
+  cmd.motorType  = MotorType::GO_M8010_6;
+  data.motorType = MotorType::GO_M8010_6;
+
+  // Print initial position for cart motor (same mechanic as your working code)
+  double q0 = readMotorPos(CART_ID, cmd, data, serial_Cart);
+  printf("Cart Motor (ID %d) Initial Position: %f rad\n", CART_ID, q0);
+
+  // Interactive distance commands for cart motor
+  while (true) {
+    double cm;
+    std::cout << "\nEnter cart distance (cm) (+ forward, - backward, 0 quit): ";
+    std::cin >> cm;
+
+    if (!std::cin) break;
+    if (cm == 0) break;
+
+    moveCartDistanceCm(cm, cmd, data, serial_Cart);
+  }
+
+  // Stop cart motor at end
+  cmd.id   = CART_ID;
+  cmd.mode = 0;
+  serial_Cart.sendRecv(&cmd, &data);
+
+  usleep(200);
+  return 0;
+}
 
 /*
-Move motor by a linear distance in cm:
-- direction decided once from dist_cm sign
-- speed control in loop until target reached
+readMotorPos
+- Uses your exact "mode 0 + sendRecv" method to read encoder position data.q
 */
-void moveDistanceCm_speedControl(double dist_cm,
-                                 MotorCmd &cmd,
-                                 MotorData &data,
-                                 SerialPort &serial)
-{
-  // Decide direction ONCE (no direction-from-error)
-  // dist_cm > 0 => forward, dist_cm < 0 => backward
-  double direction = (dist_cm > 0) ? 1.0 : -1.0;
-
-  // Read starting motor position
-  cmd.id   = DRIVE_ID;
-  cmd.mode = 0;                 // stop/static read
+double readMotorPos(int motor_id, MotorCmd &cmd, MotorData &data, SerialPort &serial) {
+  cmd.id   = motor_id;
+  cmd.mode = 0;                 // static/stop so we can read position
   serial.sendRecv(&cmd, &data);
-  double q_start = data.q;
+  return data.q;
+}
 
-  // Compute target motor position
+/*
+moveCartDistanceCm
+- Uses your working speed-control mechanics (mode 1, kp=0, kd=0.01, dq set)
+- Moves until the motor encoder reaches q_target within POS_TOL_RAD
+*/
+void moveCartDistanceCm(double dist_cm, MotorCmd &cmd, MotorData &data, SerialPort &serial) {
+  // Read starting position (mode 0)
+  double q_start = readMotorPos(CART_ID, cmd, data, serial);
+
+  // Compute desired motor position
   double q_target = q_start + RAD_PER_CM * dist_cm;
 
   std::cout << "\nRequested move: " << dist_cm << " cm\n";
   std::cout << "q_start  = " << q_start  << " rad\n";
   std::cout << "q_target = " << q_target << " rad\n";
 
-  // Start at slow speed
-  double speed_cmd = MOTOR_SPEED_START;
+  // Direction decided once from sign of cm
+  double direction = (dist_cm > 0) ? 1.0 : -1.0;
 
-  // Loop until we reach target (within tolerance) AND speed has been reduced enough
+  // Loop until we reach target
   while (true) {
-    // Read current position
-    cmd.id   = DRIVE_ID;
-    cmd.mode = 0;
-    serial.sendRecv(&cmd, &data);
-    double q_now = data.q;
+    // Read current position (mode 0)
+    double q_now = readMotorPos(CART_ID, cmd, data, serial);
 
+    // Stop condition: "at desired position" within tolerance
+    if (std::fabs(q_target - q_now) < POS_TOL_RAD) {
+      break;
+    }
 
-
-    // SPEED CONTROL command (same style as your runTsec)
-    cmd.id   = DRIVE_ID;
-    cmd.mode = 1;       // FOC control
+    // SPEED CONTROL COMMAND (same fields as your runTsec)
+    cmd.id   = CART_ID;
+    cmd.mode = 1;       // FOC
     cmd.kp   = 0.0;     // position off
-    cmd.kd   = 0.01;    // speed damping
-    cmd.q    = 0.0;     // unused (kp=0)
-    cmd.dq   = direction * speed_cmd; // constant speed toward target
-    cmd.tau  = 0.0;     // torque feedforward off
+    cmd.kd   = 0.01;    // speed control damping
+    cmd.q    = 0.0;     // unused
+    cmd.dq   = direction * MOTOR_SPEED_CMD; // constant speed
+    cmd.tau  = 0.0;     // torque off
 
     serial.sendRecv(&cmd, &data);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(20)); // ~50 Hz
+    if (data.correct == true) {
+      print_MotorData(cmd, data);
+    }
+
+    // Loop timing (like runTsec, but faster so it stops closer to target)
+    std::this_thread::sleep_for(std::chrono::milliseconds(20));
   }
 
-  // Stop motor
-  cmd.id   = DRIVE_ID;
+  // Stop motor (mode 0), same as your runTsec end
+  cmd.id   = CART_ID;
   cmd.mode = 0;
   serial.sendRecv(&cmd, &data);
 
-  std::cout << "Reached target, motor stopped.\n";
+  std::cout << "Move complete (stopped)\n";
 }
 
-int main() {
-  // Initialize serial + motor structs
-  SerialPort serial(USB_NO);
-  MotorCmd   cmd;
-  MotorData  data;
-
-  cmd.motorType  = MotorType::GO_M8010_6;
-  data.motorType = MotorType::GO_M8010_6;
-
-  std::cout << "RAD_PER_CM = " << RAD_PER_CM << " motor rad/cm\n";
-
-  // User input loop
-  while (true) {
-    double cm;
-    std::cout << "\nEnter desired distance (cm) (+ forward, - backward, 0 quit): ";
-    std::cin >> cm;
-
-    if (!std::cin) break;
-    if (cm == 0) break;
-
-    moveDistanceCm_speedControl(cm, cmd, data, serial);
-  }
-
-  // End: stop motor just in case
-  cmd.id   = DRIVE_ID;
-  cmd.mode = 0;
-  serial.sendRecv(&cmd, &data);
-
-  return 0;
+/* print_MotorData
+same as your working code
+*/
+void print_MotorData(MotorCmd &cmd, MotorData &data) {
+  std::cout <<  std::endl;
+  std::cout <<  "motor ID is: "  << cmd.id    << std::endl;
+  std::cout <<  "motor pos: "    << data.q    << " rad" << std::endl;
+  std::cout <<  "motor Temp: "   << data.temp << " ℃"  << std::endl;
+  std::cout <<  "motor speed: "  << data.dq   << " rad/s"<<std::endl;
+  std::cout <<  "motor tau: "    << data.tau  << " Nm" << std::endl;
+  std::cout <<  std::endl;
 }
