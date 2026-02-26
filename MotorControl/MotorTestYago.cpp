@@ -1,3 +1,14 @@
+#include <unistd.h>
+#include <iostream>
+#include <thread>
+#include <chrono>
+#include <cmath>
+
+#include "unitreeMotor/unitreeMotor.h"
+#include "serialPort/SerialPort.h"
+
+const char* USB_DRIVE = "/dev/ttyUSB0";
+
 /*
 Wheel radius (meters)
 114.3 mm = 0.1143 m
@@ -58,10 +69,6 @@ int main()
             cmd.mode = 0;
             serial.sendRecv(&cmd, &data);
 
-            double error = q_target - data.q;
-
-            if (std::fabs(error) < 0.02)
-                break;
 
             cmd.id   = ID;
             cmd.mode = 1;
