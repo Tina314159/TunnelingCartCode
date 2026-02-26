@@ -17,7 +17,8 @@ Notes:
 
 /*definitions/macros/variables*/
 #define MOTOR_COUNT 2 // # of motors  
-const char* USB_NO = "/dev/ttyUSB0"; 
+const char* USB_CartMotor = "/dev/ttyUSB0"; 
+const char* USB_LA_Motor = "/dev/ttyUSB1"; 
 
 /*functions prototypes*/
 void runTsec(int motor_id, MotorCmd &cmd, MotorData &data, SerialPort &serial, double T, double W);
@@ -29,7 +30,9 @@ void print_MotorData(MotorCmd &cmd, MotorData &data);
 */
 int main() {
   /*initialization*/
-  SerialPort  serial(USB_NO);
+  SerialPort  serial_Cart(USB_CartMotor);
+  SerialPort  serial_LA(USB_LA_Motor);
+  
   MotorCmd    cmd;
   MotorData   data;
   cmd.motorType = MotorType::GO_M8010_6;
@@ -41,7 +44,8 @@ int main() {
       cmd.motorType = MotorType::GO_M8010_6;
       cmd.id = i;
       cmd.mode = 0; // motor = static, so we can read the position
-      serial.sendRecv(&cmd, &data);
+      serial_Cart.sendRecv(&cmd, &data);
+      serial_LA.sendRecv(&cmd, &data);
       init_Pos[i] = data.q; // initial position storage
       printf("Motor %d Inititial Position: %f rad\n", i, data.q);
       usleep(200);
@@ -49,7 +53,8 @@ int main() {
 
   /*Main program*/
   for (int i = 0; i < MOTOR_COUNT; i++) {
-      runTsec(i, cmd, data, serial,5, 6.28);  
+      runTsec(i, cmd, data, serial_Cart,5, 6.28); 
+      runTsec(i, cmd, data, serial_LA,5, 6.28);  
   }
   
   /*End Matter*/
