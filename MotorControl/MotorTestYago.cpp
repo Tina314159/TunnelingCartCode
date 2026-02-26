@@ -1,16 +1,27 @@
-#include <unistd.h>
-#include <iostream>
-#include <thread>
-#include <chrono>
-#include <cmath>
+/*
+Wheel radius (meters)
+114.3 mm = 0.1143 m
+*/
+const double WHEEL_RADIUS = 0.1143;
 
-#include "unitreeMotor/unitreeMotor.h"
-#include "serialPort/SerialPort.h"
+/*
+Gear ratio G
+6.33 motor rotations = 1 wheel rotation
+*/
+const double GEAR_RATIO = 6.33;
 
-const char* USB_DRIVE = "/dev/ttyUSB0";
+/*
+Compute radians per cm automatically:
 
-// Conversion: 1 cm ≈ 0.5538 motor radians
-const double RAD_PER_CM = 0.5538;
+theta_motor = (distance / R) * G
+
+For 1 cm:
+distance = 0.01 m
+
+So:
+RAD_PER_CM = (0.01 / R) * G
+*/
+const double RAD_PER_CM = (0.01 / WHEEL_RADIUS) * GEAR_RATIO;
 
 int main()
 {
