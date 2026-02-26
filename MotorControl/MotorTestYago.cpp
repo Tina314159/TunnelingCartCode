@@ -39,7 +39,7 @@ const double RAD_PER_CM = (0.01 / WHEEL_RADIUS) * GEAR_RATIO;
 
 // ---------- Control ----------
 const double POS_TOL_RAD = 0.02;      // stop when |q_target - q_now| < this
-const double WHEEL_SPEED_RAD_S = 1.0; // slow output speed (wheel rad/s)
+const double WHEEL_SPEED_RAD_S = 6.28; // slow output speed (wheel rad/s)
 const double MOTOR_SPEED_CMD = WHEEL_SPEED_RAD_S * GEAR_RATIO; // motor rad/s
 
 void print_MotorData(MotorCmd &cmd, MotorData &data) {
