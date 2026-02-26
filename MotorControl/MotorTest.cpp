@@ -17,7 +17,7 @@ Notes:
 
 /*definitions/macros/variables*/
 #define MOTOR_COUNT 2 // # of motors  
-const char* USB_NO = "/dev/ttyUSB3"; 
+const char* USB_NO = "/dev/ttyUSB0"; 
 
 /*functions prototypes*/
 void runTsec(int motor_id, MotorCmd &cmd, MotorData &data, SerialPort &serial, double T, double W);
@@ -76,7 +76,7 @@ void runTsec(int motor_id, MotorCmd &cmd, MotorData &data, SerialPort &serial, d
     std::cout <<  std::endl;               //change line
     std::cout <<  "NOW RUNNING MOTOR  "  << motor_id  << std::endl; // print to console
     usleep(1000000);                       //sleep for 10^6 microsec = 1s
-    while (steady_clock::now() - startClock < seconds(T+1)) { 
+    while (steady_clock::now() - startClock < duration<double>(T)) { 
         //while clock have not went over T sec, set up cmd info
         cmd.id    = motor_id;
         cmd.mode  = 1;    //mode 0 = stop, mode 1 = FOC = field oriented control
