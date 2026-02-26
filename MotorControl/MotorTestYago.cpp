@@ -122,7 +122,7 @@ void moveCartDistanceCm(double dist_cm, MotorCmd &cmd, MotorData &data, SerialPo
     double q_now = readMotorPos(CART_ID, cmd, data, serial);
 
     // Stop condition: "at desired position" within tolerance
-    if (std::fabs(q_target - q_now) < POS_TOL_RAD) {
+    if ((q_target - q_now) < POS_TOL_RAD) {
       break;
     }
 
