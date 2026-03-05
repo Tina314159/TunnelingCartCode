@@ -113,8 +113,7 @@ void moveCartDistanceCm(double dist_cm, MotorCmd &cmd, MotorData &data, SerialPo
   std::cout << "q_start  = " << q_start  << " rad\n";
   std::cout << "q_target = " << q_target << " rad\n";
 
-  // Direction decided once from sign of cm
-  double direction = (dist_cm > 0) ? 1.0 : -1.0;
+
 
   // Loop until we reach target
   while (true) {
@@ -126,6 +125,7 @@ void moveCartDistanceCm(double dist_cm, MotorCmd &cmd, MotorData &data, SerialPo
     if (fabs(q_target - q_now) < POS_TOL_RAD) {
         break;
     }
+    double direction = (dist_cm > 0) ? 1.0 : -1.0;
 
     // SPEED CONTROL COMMAND (same fields as your runTsec)
     cmd.id   = CART_ID;
