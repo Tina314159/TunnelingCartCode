@@ -158,8 +158,8 @@ void moveCartDistanceCm(double dist_cm, MotorCmd &cmd, MotorData &data, SerialPo
 same as your working code
 */
 void print_MotorData(MotorCmd &cmd, MotorData &data, double q_target) {
-
-  double error = q_target - data.q;
+  double error;
+  error = q_target - data.q;
 
   std::cout << std::endl;
   std::cout << "motor ID: " << cmd.id << std::endl;
