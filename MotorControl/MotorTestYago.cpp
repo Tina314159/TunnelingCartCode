@@ -40,7 +40,7 @@ const double GEAR_RATIO = 6.33;
 const double RAD_PER_CM = (0.01 / WHEEL_RADIUS) * GEAR_RATIO;
 
 // Stop tolerance in motor radians
-const double POS_TOL_RAD = 0.1;
+const double POS_TOL_RAD = 5;
 
 // Constant SPEED command (your request: make speed 6.33)
 // This is motor-side rad/s, sent as cmd.dq
@@ -157,12 +157,17 @@ void moveCartDistanceCm(double dist_cm, MotorCmd &cmd, MotorData &data, SerialPo
 /* print_MotorData
 same as your working code
 */
-void print_MotorData(MotorCmd &cmd, MotorData &data) {
-  std::cout <<  std::endl;
-  std::cout <<  "motor ID is: "  << cmd.id    << std::endl;
-  std::cout <<  "motor pos: "    << data.q    << " rad" << std::endl;
-  std::cout <<  "motor Temp: "   << data.temp << " ℃"  << std::endl;
-  std::cout <<  "motor speed: "  << data.dq   << " rad/s"<<std::endl;
-  std::cout <<  "motor tau: "    << data.tau  << " Nm" << std::endl;
-  std::cout <<  std::endl;
+void print_MotorData(MotorCmd &cmd, MotorData &data, double q_target) {
+
+  double error = q_target - data.q;
+
+  std::cout << std::endl;
+  std::cout << "motor ID: " << cmd.id << std::endl;
+  std::cout << "motor pos: " << data.q << " rad" << std::endl;
+  std::cout << "target pos: " << q_target << " rad" << std::endl;
+  std::cout << "error: " << error << " rad" << std::endl;
+  std::cout << "motor Temp: " << data.temp << " ℃" << std::endl;
+  std::cout << "motor speed: " << data.dq << " rad/s" << std::endl;
+  std::cout << "motor tau: " << data.tau << " Nm" << std::endl;
+  std::cout << std::endl;
 }
