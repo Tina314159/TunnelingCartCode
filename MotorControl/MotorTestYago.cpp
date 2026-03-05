@@ -47,7 +47,7 @@ const double POS_TOL_RAD = 5;
 const double MOTOR_SPEED_CMD = 6.28 * 6.33;
 
 /*function prototypes*/
-void print_MotorData(MotorCmd &cmd, MotorData &data);
+void print_MotorData(MotorCmd &cmd, MotorData &data, double q_target);
 double readMotorPos(int motor_id, MotorCmd &cmd, MotorData &data, SerialPort &serial);
 void moveCartDistanceCm(double dist_cm, MotorCmd &cmd, MotorData &data, SerialPort &serial);
 
