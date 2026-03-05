@@ -139,7 +139,7 @@ void moveCartDistanceCm(double dist_cm, MotorCmd &cmd, MotorData &data, SerialPo
     serial.sendRecv(&cmd, &data);
 
     if (data.correct == true) {
-      print_MotorData(cmd, data);
+      print_MotorData(cmd, data, q_target);
     }
 
     // Loop timing (like runTsec, but faster so it stops closer to target)
