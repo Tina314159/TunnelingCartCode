@@ -122,8 +122,9 @@ void moveCartDistanceCm(double dist_cm, MotorCmd &cmd, MotorData &data, SerialPo
     double q_now = readMotorPos(CART_ID, cmd, data, serial);
 
     // Stop condition: "at desired position" within tolerance
-    if ((q_target - q_now) < POS_TOL_RAD) {
-      break;
+    // Calclates the error not depending on direction
+    if (fabs(q_target - q_now) < POS_TOL_RAD) {
+        break;
     }
 
     // SPEED CONTROL COMMAND (same fields as your runTsec)
