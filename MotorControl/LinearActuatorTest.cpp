@@ -33,6 +33,7 @@ int main() {
 
         if (input == 1) {
             // Extend
+            std::cout << "Extend\n";
             gpiod_line_set_value(Power_12Vpin, 0); //cuts power before switching 
                                                    //in case of switch delay --> lead to short circuit
             usleep(100000);   // 100 ms delay for safety
@@ -41,6 +42,7 @@ int main() {
         }
         else if (input == 2) {
             // Retract
+            std::cout << "Retract\n";
             gpiod_line_set_value(Power_12Vpin, 0);
             usleep(100000);   // 100 ms
             gpiod_line_set_value(LApin, 0);
@@ -48,10 +50,12 @@ int main() {
         }
         else if (input == 3) {
             // cut power
+            std::cout << "Cut 12V Power\n";
             gpiod_line_set_value(Power_12Vpin, 0);
         } 
         else if (input == 4) {
             // power on
+            std::cout << "Turn on 12V power\n";
             gpiod_line_set_value(Power_12Vpin, 1);
         }
     }
