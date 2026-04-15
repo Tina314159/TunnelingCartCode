@@ -3,6 +3,8 @@
 #include <thread>
 #include <chrono>
 #include <cmath>
+#include <termios.h>
+#include <fcntl.h>
 
 #include "unitreeMotor/unitreeMotor.h"
 #include "serialPort/SerialPort.h"
@@ -17,12 +19,18 @@ const int CART_ID = 0;
 const double SLOW_SPEED = 6.28 * 3.0;
 const double FAST_SPEED = 6.28 * 6.33;
 
+/* raw input globals */
+termios originalTermios;
+int originalFlags;
+
 /* function prototypes */
 double readMotorPos(int motor_id, MotorCmd &cmd, MotorData &data, SerialPort &serial);
 void stopMotor(int motor_id, MotorCmd &cmd, MotorData &data, SerialPort &serial);
 void runMotor(int motor_id, double speed, MotorCmd &cmd, MotorData &data, SerialPort &serial);
 void autoMode(MotorCmd &cmd, MotorData &data, SerialPort &serial);
 void manualMode(MotorCmd &cmd, MotorData &data, SerialPort &serial);
+void enableRawMode();
+void disableRawMode();
 
 /* main */
 int main() {
@@ -101,6 +109,27 @@ void runMotor(int motor_id, double speed, MotorCmd &cmd, MotorData &data, Serial
     serial.sendRecv(&cmd, &data);
 }
 
+/* enable raw keyboard mode */
+void enableRawMode() {
+    tcgetattr(STDIN_FILENO, &originalTermios);
+
+    termios raw = originalTermios;
+    raw.c_lflag &= ~(ICANON | ECHO);   // no enter needed, no echo
+    raw.c_cc[VMIN] = 0;
+    raw.c_cc[VTIME] = 0;
+
+    tcsetattr(STDIN_FILENO, TCSANOW, &raw);
+
+    originalFlags = fcntl(STDIN_FILENO, F_GETFL, 0);
+    fcntl(STDIN_FILENO, F_SETFL, originalFlags | O_NONBLOCK);
+}
+
+/* restore terminal */
+void disableRawMode() {
+    tcsetattr(STDIN_FILENO, TCSANOW, &originalTermios);
+    fcntl(STDIN_FILENO, F_SETFL, originalFlags);
+}
+
 /* auto mode */
 void autoMode(MotorCmd &cmd, MotorData &data, SerialPort &serial) {
     int directionChoice;
@@ -167,39 +196,58 @@ void manualMode(MotorCmd &cmd, MotorData &data, SerialPort &serial) {
         return;
     }
 
-    std::cout << "Use:\n";
+    std::cout << "\nHold controls:\n";
     std::cout << "w = forward\n";
     std::cout << "s = backward\n";
-    std::cout << "x = stop\n";
     std::cout << "q = quit manual mode\n";
+    std::cout << "release key = stop\n";
+
+    std::cin.ignore(10000, '\n');
+
+    enableRawMode();
+
+    int direction = 0;
+    auto lastKeyTime = std::chrono::steady_clock::now();
 
     while (true) {
         char command;
-        std::cout << "\nEnter command: ";
-        std::cin >> command;
 
-        if (!std::cin) return;
+        while (read(STDIN_FILENO, &command, 1) > 0) {
+            if (command == 'q') {
+                stopMotor(CART_ID, cmd, data, serial);
+                disableRawMode();
+                std::cout << "\nExiting manual mode\n";
+                return;
+            } 
+            else if (command == 'w') {
+                direction = 1;
+                lastKeyTime = std::chrono::steady_clock::now();
+            } 
+            else if (command == 's') {
+                direction = -1;
+                lastKeyTime = std::chrono::steady_clock::now();
+            }
+        }
 
-        if (command == 'w') {
+        auto now = std::chrono::steady_clock::now();
+        long long msSinceLastKey =
+            std::chrono::duration_cast<std::chrono::milliseconds>(now - lastKeyTime).count();
+
+        // if key repeats stop coming in, assume released
+        if (msSinceLastKey > 120) {
+            direction = 0;
+        }
+
+        if (direction == 1) {
             runMotor(CART_ID, baseSpeed, cmd, data, serial);
-            std::cout << "Moving forward\n";
         } 
-        else if (command == 's') {
+        else if (direction == -1) {
             runMotor(CART_ID, -baseSpeed, cmd, data, serial);
-            std::cout << "Moving backward\n";
-        } 
-        else if (command == 'x') {
-            stopMotor(CART_ID, cmd, data, serial);
-            std::cout << "Stopped\n";
-        } 
-        else if (command == 'q') {
-            stopMotor(CART_ID, cmd, data, serial);
-            std::cout << "Exiting manual mode\n";
-            break;
         } 
         else {
             stopMotor(CART_ID, cmd, data, serial);
-            std::cout << "No valid command, motor stopped\n";
         }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
 }
