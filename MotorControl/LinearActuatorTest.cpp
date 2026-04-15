@@ -3,7 +3,7 @@
 
 int main() {
     // Open GPIO chip
-    gpiod_chip* chip = gpiod_chip_open_by_name("gpiochip0");
+    gpiod_chip* chip = gpiod_chip_open_by_name("gpiochip4");
     if (!chip) {
         std::cerr << "Failed to open chip\n";
         return 1;
