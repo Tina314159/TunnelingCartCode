@@ -1,5 +1,6 @@
 #include <gpiod.h>
 #include <iostream>
+#include <unistd.h>
 
 int main() {
     // Open GPIO chip
