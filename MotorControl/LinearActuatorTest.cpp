@@ -38,7 +38,7 @@ int main() {
             gpiod_line_set_value(Power_12Vpin, 0); //cuts power before switching 
                                                    //in case of switch delay --> lead to short circuit
             usleep(100000);   // 100 ms delay for safety
-            gpiod_line_set_value(LApin, 1);
+            gpiod_line_set_value(LApin, 0);
             gpiod_line_set_value(Power_12Vpin, 1);
         }
         else if (input == 2) {
@@ -46,7 +46,7 @@ int main() {
             std::cout << "Retract\n";
             gpiod_line_set_value(Power_12Vpin, 0);
             usleep(100000);   // 100 ms
-            gpiod_line_set_value(LApin, 0);
+            gpiod_line_set_value(LApin, 1);
             gpiod_line_set_value(Power_12Vpin, 1);
         }
         else if (input == 3) {
@@ -62,7 +62,7 @@ int main() {
     }
     // exit program
     gpiod_line_set_value(Power_12Vpin, 0);
-    gpiod_line_set_value(LApin, 0); //default retract for next time?
+    gpiod_line_set_value(LApin, 1); //default retract for next time?
     
     gpiod_line_release(LApin);
     gpiod_line_release(Power_12Vpin);
