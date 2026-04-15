@@ -19,7 +19,7 @@ Keeps your second motor/USB1 code structure intact, but we focus on moving the c
 #include <chrono>
 #include <cmath>
 
-#include "unitree_actuator_sdk/ include / unitreeMotor/ unitreeMotor.h"
+#include "unitree_actuator_sdk/include/unitreeMotor/unitreeMotor.h"
 #include "serialPort/SerialPort.h"
 
 /*definitions/macros/variables*/
