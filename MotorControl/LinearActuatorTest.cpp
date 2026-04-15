@@ -19,11 +19,12 @@ int main() {
     }
     
     // Set pins as outputs, start LOW
-    gpiod_line_request_output(LApin, "linear_actuator", 0);
     gpiod_line_request_output(Power_12Vpin, "linear_actuator", 0);
-
+    gpiod_line_request_output(LApin, "linear_actuator", 0);
+    
     int input;
-
+    std::cout << "----Linear Actuator Control Program-----\n";
+    std::cout << "Note: Pin 17 for LA, Pin 10 for 12 V power.\n";
     std::cout << "Enter 0 to exit program, 1 to extend, 2 to retract, 3 to cut power (stop), 4 to power on:\n";
     
     input = 3; //initialization
@@ -32,11 +33,18 @@ int main() {
 
         if (input == 1) {
             // Extend
+            gpiod_line_set_value(Power_12Vpin, 0); //cuts power before switching 
+                                                   //in case of switch delay --> lead to short circuit
+            usleep(100000);   // 100 ms delay for safety
             gpiod_line_set_value(LApin, 1);
+            gpiod_line_set_value(Power_12Vpin, 1);
         }
         else if (input == 2) {
             // Retract
+            gpiod_line_set_value(Power_12Vpin, 0);
+            usleep(100000);   // 100 ms
             gpiod_line_set_value(LApin, 0);
+            gpiod_line_set_value(Power_12Vpin, 1);
         }
         else if (input == 3) {
             // cut power
@@ -49,7 +57,8 @@ int main() {
     }
     // exit program
     gpiod_line_set_value(Power_12Vpin, 0);
-
+    gpiod_line_set_value(LApin, 0); //default retract for next time?
+    
     gpiod_line_release(LApin);
     gpiod_line_release(Power_12Vpin);
     gpiod_chip_close(chip);
