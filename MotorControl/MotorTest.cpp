@@ -85,8 +85,8 @@ void runTsec(int motor_id, MotorCmd &cmd, MotorData &data, SerialPort &serial, d
         //while clock have not went over T sec, set up cmd info
         cmd.id    = motor_id;
         cmd.mode  = 1;    //mode 0 = stop, mode 1 = FOC = field oriented control
-        cmd.kp    = 0.0;  //for position contorl. off.
-        cmd.kd    = 0.01; //for speed control
+        cmd.kp    = 0.02;  //for position contorl.
+        cmd.kd    = 0.0; //for speed control. off
         cmd.q     = 0.0;  //position control. off.
         cmd.dq     = W*6.33; //speed control, 6.28 is in rad/s, 6.33 = gear ratio
                                 // so .dq = 6.28*6.33 means motor output is 6.28rad/s = 1 rev/s 
