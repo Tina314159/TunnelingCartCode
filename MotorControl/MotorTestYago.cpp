@@ -11,7 +11,7 @@
 
 /* definitions */
 const char* USB_CartMotor = "/dev/ttyUSB0";
-const char* USB_LA_Motor  = "/dev/ttyUSB1";
+
 
 const int CART_ID = 0;
 
@@ -35,7 +35,6 @@ void disableRawMode();
 /* main */
 int main() {
     SerialPort serial_Cart(USB_CartMotor);
-    SerialPort serial_LA(USB_LA_Motor); // initialized but not used here
 
     MotorCmd cmd;
     MotorData data;
