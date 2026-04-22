@@ -24,6 +24,9 @@ const double FAST_SPEED = 6.28 * 6.33;
 termios originalTermios;
 int originalFlags;
 
+/* installation globals */
+int liningInstalled;   // 1 for top down, 2 for left right
+
 /* function prototypes */
 double readMotorPos(int motor_id, MotorCmd &cmd, MotorData &data, SerialPort &serial);
 void stopMotor(int motor_id, MotorCmd &cmd, MotorData &data, SerialPort &serial);
@@ -79,6 +82,9 @@ int main() {
         } 
         else if (mode == 3) {
             // run linear actuator program
+            // before main, set current motor position to 0 rad
+            // turn motor to position 2 slowly, which is 90 deg CCW
+            // 
         } 
         else {
             std::cout << "Invalid mode\n";
@@ -248,7 +254,7 @@ void manualMode(MotorCmd &cmd, MotorData &data, SerialPort &serial) {
         // if key repeats stop coming in, assume released
         if (msSinceLastKey > 120) {
             direction = 0;
-        }
+        }           
 
         if (direction == 1) {
             runMotor(CART_ID, baseSpeed, cmd, data, serial);
