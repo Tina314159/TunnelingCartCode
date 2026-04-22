@@ -38,12 +38,17 @@ int main() {
     SerialPort serial_Cart(USB_CartMotor);
     SerialPort serial_LA(USB_LA_Motor);  
 
-
     // cmd & data for cart motor
     MotorCmd cmd;
     MotorData data;
     cmd.motorType = MotorType::GO_M8010_6;
     data.motorType = MotorType::GO_M8010_6;
+
+    // cmd & data for LA motor
+    MotorCmd cmd_LA;
+    MotorData data_LA;
+    cmd_LA.motorType = MotorType::GO_M8010_6;
+    data_LA.motorType = MotorType::GO_M8010_6;
 
     double q0 = readMotorPos(CART_ID, cmd, data, serial_Cart);
     std::cout << "Cart Motor Initial Position: " << q0 << " rad\n";
@@ -53,6 +58,7 @@ int main() {
         std::cout << "\nSelect mode:\n";
         std::cout << "1 = Auto mode\n";
         std::cout << "2 = Manual mode\n";
+        std::cout << "3 = Lining Installation mode\n";
         std::cout << "0 = Emergency stop\n";
         std::cout << "Choice: ";
         std::cin >> mode;
@@ -70,6 +76,9 @@ int main() {
         } 
         else if (mode == 2) {
             manualMode(cmd, data, serial_Cart);
+        } 
+        else if (mode == 3) {
+            // run linear actuator program
         } 
         else {
             std::cout << "Invalid mode\n";
@@ -254,45 +263,3 @@ void manualMode(MotorCmd &cmd, MotorData &data, SerialPort &serial) {
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
     }
 }
-//////////////////////////
-//////////////////////////
-//////////////////////////
-//////////////////////////
-/*main
-- initialize the USB port and communication structures
-
-*/
-int main() {
-  /*initialization*/
-  SerialPort  serial_Cart(USB_CartMotor);
-  SerialPort  serial_LA(USB_LA_Motor);
-  
-  MotorCmd    cmd;
-  MotorData   data;
-  cmd.motorType = MotorType::GO_M8010_6;
-  data.motorType = MotorType::GO_M8010_6;
-
-  /*Motor initial position check*/
-  double init_Pos[MOTOR_COUNT];              // initialize position storage
-  for (int i = 0; i < MOTOR_COUNT; i++) {
-      cmd.motorType = MotorType::GO_M8010_6;
-      cmd.id = i;
-      cmd.mode = 0; // motor = static, so we can read the position
-      serial_Cart.sendRecv(&cmd, &data);
-      serial_LA.sendRecv(&cmd, &data);
-      init_Pos[i] = data.q; // initial position storage
-      printf("Motor %d Inititial Position: %f rad\n", i, data.q);
-      usleep(200);
-  }
-
-  /*Main program*/
-  for (int i = 0; i < MOTOR_COUNT; i++) {
-      runTsec(i, cmd, data, serial_Cart,5, 6.28); 
-      runTsec(i, cmd, data, serial_LA,5, 6.28);  
-  }
-  
-  /*End Matter*/
-  usleep(200);
-  return 0;
-}
- 
