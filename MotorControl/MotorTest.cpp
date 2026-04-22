@@ -17,7 +17,7 @@ int main() {
     cmd.motorType = MotorType::GO_M8010_6;
     data.motorType = MotorType::GO_M8010_6;
 
-    int motor_id = 0;   // change if needed
+    int motor_id = 1;   // change if needed
     int input = -1;
 
     std::cout << "Motor Step Program\n";
