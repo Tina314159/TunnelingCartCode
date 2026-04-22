@@ -4,7 +4,7 @@
 #include "unitreeMotor/unitreeMotor.h"
 #include "serialPort/SerialPort.h"
 
-const char* USB_LA_Motor = "/dev/ttyUSB1";
+const char* USB_LA_Motor = "/dev/ttyUSB2";
 
 void print_MotorData(MotorCmd &cmd, MotorData &data);
 void move90degStep(int motor_id, int direction, MotorCmd &cmd, MotorData &data, SerialPort &serial);
