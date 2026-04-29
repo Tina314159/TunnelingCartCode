@@ -69,41 +69,40 @@ void move90degStep(int motor_id, int direction, MotorCmd &cmd, MotorData &data, 
         std::cout << "Failed to read current position\n";
         return;
     }
-
-    double q_now = data.q;
-    double q_target = q_now + direction * STEP_MOTOR_RAD;
-
-    std::cout << "\nCurrent position: " << q_now << " rad\n";
-    std::cout << "Target position:  " << q_target << " rad\n";
-
-    if (direction == 1) {
-        std::cout << "Rotating +90 degrees...\n";
-    } else {
-        std::cout << "Rotating -90 degrees...\n";
-    }
-
+    // new version
+    double q_cmd = q_now;
+    const double MAX_STEP = 0.01;  // rad per cycle (tune this!)
+    
     while (true) {
+        double error = q_target - q_cmd;
+    
+        if (std::fabs(error) < MAX_STEP) {
+            q_cmd = q_target;
+        } else {
+            q_cmd += (error > 0 ? MAX_STEP : -MAX_STEP);
+        }
+    
         cmd.id   = motor_id;
         cmd.mode = 1;
-        cmd.kp   = 0.06;
-        cmd.kd   = 0.0;
-        cmd.q    = q_target;
+        cmd.kp   = 0.1;     // you can increase kp now
+        cmd.kd   = 0.02;    // add damping!
+        cmd.q    = q_cmd;
         cmd.dq   = 0.0;
         cmd.tau  = 0.0;
-
+    
         serial.sendRecv(&cmd, &data);
-
+    
         if (data.correct) {
             print_MotorData(cmd, data);
-
+    
             if (std::fabs(q_target - data.q) < POS_TOL_RAD) {
                 break;
             }
         }
-
+    
         usleep(LOOP_DELAY_US);
     }
-
+  
     // Stop motor
     cmd.id = motor_id;
     cmd.mode = 0;
