@@ -12,10 +12,10 @@ void move90degStep(int motor_id, int direction, MotorCmd &cmd, MotorData &data, 
 int main() {
     SerialPort serial_LA(USB_LA_Motor);
 
-    MotorCmd cmd;
-    MotorData data;
-    cmd.motorType = MotorType::GO_M8010_6;
-    data.motorType = MotorType::GO_M8010_6;
+    MotorCmd cmd1;
+    MotorData data1;
+    cmd1.motorType = MotorType::GO_M8010_6;
+    data1.motorType = MotorType::GO_M8010_6;
 
     int motor_id = 1;   // change if needed
     int input = -1;
@@ -36,18 +36,18 @@ int main() {
             break;
         }
         else if (input == 1) {
-            move90degStep(motor_id, +1, cmd, data, serial_LA);
+            move90degStep(motor_id, +1, cmd1, data1, serial_LA);
         }
         else if (input == 2) {
-            move90degStep(motor_id, -1, cmd, data, serial_LA);
+            move90degStep(motor_id, -1, cmd1, data1, serial_LA);
         }
         else {
             std::cout << "Unknown command\n";
         }
     }
 
-    cmd.id = motor_id;
-    cmd.mode = 0;
+    cmd1.id = motor_id;
+    cmd1.mode = 0;
     serial_LA.sendRecv(&cmd, &data);
 
     return 0;
@@ -85,8 +85,8 @@ void move90degStep(int motor_id, int direction, MotorCmd &cmd, MotorData &data, 
     while (true) {
         cmd.id   = motor_id;
         cmd.mode = 1;
-        cmd.kp   = 0.8;
-        cmd.kd   = 0.05;
+        cmd.kp   = 0.02;
+        cmd.kd   = 0.0;
         cmd.q    = q_target;
         cmd.dq   = 0.0;
         cmd.tau  = 0.0;
