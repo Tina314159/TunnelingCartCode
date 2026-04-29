@@ -48,7 +48,7 @@ int main() {
 
     cmd1.id = motor_id;
     cmd1.mode = 0;
-    serial_LA.sendRecv(&cmd, &data);
+    serial_LA.sendRecv(&cmd1, &data1);
 
     return 0;
 }
