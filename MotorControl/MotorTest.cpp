@@ -85,7 +85,7 @@ void move90degStep(int motor_id, int direction, MotorCmd &cmd, MotorData &data, 
     while (true) {
         cmd.id   = motor_id;
         cmd.mode = 1;
-        cmd.kp   = 0.02;
+        cmd.kp   = 0.1;
         cmd.kd   = 0.0;
         cmd.q    = q_target;
         cmd.dq   = 0.0;
