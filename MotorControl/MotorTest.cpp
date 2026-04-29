@@ -55,7 +55,7 @@ int main() {
 
 void move90degStep(int motor_id, int direction, MotorCmd &cmd, MotorData &data, SerialPort &serial) {
     const double GEAR_RATIO = 6.33;
-    const double STEP_OUTPUT_RAD = M_PI / 2.0;     // 90 degrees at output
+    const double STEP_OUTPUT_RAD = M_PI / 4.0;     // 90 degrees at output
     const double STEP_MOTOR_RAD = STEP_OUTPUT_RAD * GEAR_RATIO;
     const double POS_TOL_RAD = 0.05 * GEAR_RATIO;
     const int LOOP_DELAY_US = 10000;
